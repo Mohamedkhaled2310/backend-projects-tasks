@@ -25,15 +25,15 @@ const createTask = async (req, res) => {
     }
 };
 
-const getTaskByProject = async(req,res)=>{
-    try{
-        const {projectId} = req.params;
-        const tasks = await Task.find({projectId}).sort({order:1}).populate('assignedTo','name email');
-        res.status(200).json({ success: true, tasks });
-    }catch(err){
-        res.status(500).json({ success: false, message: "Server error" });
+const getTaskByProject = async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const tasks = await Task.find({ projectId }).sort({ order: 1 });
+      res.status(200).json({ success: true, tasks });
+    } catch (err) {
+      res.status(500).json({ success: false, message: 'Server error' });
     }
-}
+  };
 
 const updateTask = async (req,res)=>{
     try{
@@ -47,6 +47,33 @@ const updateTask = async (req,res)=>{
         res.status(500).json({ success: false, message: "Server error" });
     }
 }
+const updateTaskStatus = async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      const { status, order } = req.body;
+  
+      console.log('Updating task:', taskId, '→', status, 'order:', order);
+  
+      const task = await Task.findByIdAndUpdate(
+        taskId,
+        { status, order },
+        { new: true }
+      );
+  
+      if (!task)
+        return res.status(404).json({ success: false, message: 'Task not found' });
+  
+      res.status(200).json({
+        success: true,
+        message: 'Task status updated successfully',
+        task,
+      });
+    } catch (err) {
+      console.error('Error updating task:', err);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  };
+  
 
 const deleteTask = async (req,res) =>{
     try{
@@ -63,5 +90,6 @@ module.exports = {
     createTask,
     getTaskByProject,
     updateTask,
+    updateTaskStatus,
     deleteTask
 }

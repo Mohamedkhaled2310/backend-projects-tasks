@@ -26,34 +26,46 @@ mongoose.connect(MONGO_URL, {
 }).then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+//   app.listen(PORT, () => {
+//     console.log(`Server is running on port ${PORT}`);
+//     console.log(CLIENT_URL);
+//   });
 
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: CLIENT_URL,
-        methods: ["GET", "POST"],
-        credentials: true
-    }
+  cors: {
+    origin: CLIENT_URL,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  },
 });
-io.on('connection', (socket) => {
-    console.log('a user connected');
 
-    socket.on('join_room', (data) => {
-        socket.join(data);
-        console.log(`User with ID: ${socket.id} joined room: ${data}`);
-    });
+io.on("connection", (socket) => {
+  console.log(`User connected: ${socket.id}`);
 
-    socket.on('taskMoved', (data) => {
-        socket.to(data.room).emit('taskCreated', data);
-    });
+  socket.on("join_room", (roomId) => {
+    socket.join(roomId);
+    console.log(`User ${socket.id} joined room ${roomId}`);
+  });
 
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-    });
+  socket.on("taskMoved", (data) => {
+    socket.to(data.room).emit("taskMoved", data);
+  });
+
+  socket.on("taskCreated", (data) => {
+    socket.to(data.room).emit("taskCreated", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
 });
+
+
+server.listen(PORT, () => {
+  console.log(`Server running with Socket.IO on port ${PORT}`);
+});
+
 
 app.use('/',authRouter);
 app.use('/projects',authMiddlware,projectRouter);
