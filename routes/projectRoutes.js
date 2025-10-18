@@ -7,5 +7,6 @@ routes.post('/create', createProject);
 routes.get('/', getProjectsForUser);
 routes.get('/:id', getProjectById);
 routes.post('/:projectId/add-member', addMemberToProject);
+router.post('/projects/:projectId/invite');
 
 module.exports = routes;

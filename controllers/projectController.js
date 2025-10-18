@@ -42,26 +42,46 @@ const getProjectById = async (req, res) => {
   };
 
 
-const addMemberToProject = async (req, res) => {
-    try{
-        const {projectId} = req.params;
-        const {memberId} = req.body;
-
-        const project = await Project.findById(projectId);
-        if(!project) return res.status(404).json({success: false,message:"Project not found"});
-
-        const user = await User.findById(memberId);
-        if(!user) return res.status(404).json({success: false,message:"User not found"});
-
-        if(project.members.includes(memberId)) return res.status(400).json({success: false,message:"User is already a member of the project"});
-        project.members.push(memberId);
-        await project.save();
-
-        res.json({success: true,message:"Member added successfully", project});
-    }catch(err){
-        res.status(500).json({success: false,message:"Server error"});
+  const addMemberToProject = async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { email } = req.body;
+  
+      if (!email) {
+        return res.status(400).json({ success: false, message: "Email is required" });
+      }
+  
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ success: false, message: "Project not found" });
+      }
+  
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+  
+      const alreadyMember = project.members.some((id) => id.equals(user._id));
+      if (alreadyMember) {
+        return res.status(400).json({ success: false, message: "User is already a member of the project" });
+      }
+  
+      project.members.push(user._id);
+      await project.save();
+  
+      const updatedProject = await Project.findById(projectId).populate('members', 'name email');
+  
+      res.status(200).json({
+        success: true,
+        message: "Member added successfully",
+        project: updatedProject,
+      });
+    } catch (err) {
+      console.error("Error adding member:", err);
+      res.status(500).json({ success: false, message: "Server error" });
     }
-};
+  };
+  
 module.exports = {
     createProject,
     getProjectsForUser,
